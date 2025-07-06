@@ -10,7 +10,7 @@ npm install react-native-sim-based-sms
 
 ## Usage
 
-First, ensure you have added the necessary permissions to your `AndroidManifest.xml` as described in the setup section. Then, you can import and use the `sendSms` function in your component.
+Import and use the `sendSms` function in your component.
 
 ```javascript
 import * as React from 'react';
@@ -53,15 +53,6 @@ export default function MySmsComponent() {
 }
 ```
 
-## Android Setup
-
-You must add the following permissions to your app's main `AndroidManifest.xml` file, located at `android/app/src/main/AndroidManifest.xml`:
-
-```xml
-<uses-permission android:name="android.permission.SEND_SMS" />
-<uses-permission android:name="android.permission.READ_PHONE_STATE" />
-```
-
 ## API
 
 ### `sendSms(phoneNumber, message, simSlot)`
@@ -75,6 +66,12 @@ Sends an SMS message to a given phone number from a specific SIM slot. This func
 | `simSlot`     | `0` or `1` | The SIM slot to send from (0 for SIM 1, 1 for SIM 2). |
 
 **Returns:** A `Promise<string>` that resolves with a success message or rejects with an error.
+
+### `getSimInfo()`
+
+Retrieves a list of active SIM cards and their information.
+
+**Returns:** A `Promise<SimInfo[]>` promise that resolves with an array of SIM card info objects or rejects with an error.
 
 ## Contributing
 

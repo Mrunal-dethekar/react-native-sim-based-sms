@@ -1,6 +1,6 @@
 {
   "name": "react-native-sim-based-sms",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A React Native library to send SMS from a specific SIM slot on Android.",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
@@ -42,8 +42,10 @@
   },
   "keywords": [
     "react-native",
-    "ios",
-    "android"
+    "android",
+    "dual-sim",
+    "send-sms",
+    "get-phone-number"
   ],
   "repository": {
     "type": "git",

@@ -8,12 +8,14 @@ import {
   PermissionsAndroid,
   Alert,
   SafeAreaView,
+  ScrollView,
 } from 'react-native';
-import { sendSms } from 'react-native-sim-based-sms';
+import { sendSms, getSimInfo, type SimInfo } from 'react-native-sim-based-sms';
 
 export default function App() {
   const [phoneNumber, setPhoneNumber] = React.useState('');
   const [message, setMessage] = React.useState('');
+  const [simInfoList, setSimInfoList] = React.useState<SimInfo[]>([]);
 
   const requestSmsPermission = async () => {
     try {
@@ -61,37 +63,76 @@ export default function App() {
     }
   };
 
+  React.useEffect(() => {
+    const fetchSimInfo = async () => {
+      try {
+        const granted = await PermissionsAndroid.requestMultiple([
+          PermissionsAndroid.PERMISSIONS.READ_PHONE_NUMBERS,
+          PermissionsAndroid.PERMISSIONS.READ_PHONE_STATE,
+        ]);
+
+        if (
+          granted['android.permission.READ_PHONE_NUMBERS'] === 'granted' &&
+          granted['android.permission.READ_PHONE_STATE'] === 'granted'
+        ) {
+          const sims = await getSimInfo();
+          setSimInfoList(sims);
+        } else {
+          Alert.alert('Permission denied', 'READ_PHONE_STATE is required');
+        }
+      } catch (error) {
+        console.error('Failed to fetch SIM info:', error);
+      }
+    };
+
+    fetchSimInfo();
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>React Native SIM SMS</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Phone Number (e.g., +1234567890)"
-        onChangeText={setPhoneNumber}
-        value={phoneNumber}
-        keyboardType="phone-pad"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Message"
-        onChangeText={setMessage}
-        value={message}
-        multiline
-      />
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => handleSendSms(0)}
-        >
-          <Text style={styles.buttonText}>Send from SIM 1</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => handleSendSms(1)}
-        >
-          <Text style={styles.buttonText}>Send from SIM 2</Text>
-        </TouchableOpacity>
-      </View>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <Text style={styles.title}>React Native SIM SMS</Text>
+
+        {simInfoList.length > 0 && (
+          <View style={styles.simList}>
+            {simInfoList.map((sim, index) => (
+              <Text key={index} style={styles.simItem}>
+                SIM {sim.simSlotIndex + 1}: {sim.displayName} (
+                {sim.phoneNumber || 'N/A'})
+              </Text>
+            ))}
+          </View>
+        )}
+
+        <TextInput
+          style={styles.input}
+          placeholder="Phone Number (e.g., +1234567890)"
+          onChangeText={setPhoneNumber}
+          value={phoneNumber}
+          keyboardType="phone-pad"
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Message"
+          onChangeText={setMessage}
+          value={message}
+          multiline
+        />
+
+        <View style={styles.buttonContainer}>
+          {simInfoList.map((sim) => (
+            <TouchableOpacity
+              key={sim.simSlotIndex}
+              style={styles.button}
+              onPress={() => handleSendSms(sim.simSlotIndex)}
+            >
+              <Text style={styles.buttonText}>
+                Send from SIM {sim.simSlotIndex + 1}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -99,16 +140,31 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  scrollContainer: {
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
-    backgroundColor: '#f5f5f5',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
     color: '#333',
+  },
+  simList: {
+    marginBottom: 20,
+    width: '100%',
+    padding: 10,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 8,
+  },
+  simItem: {
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 5,
   },
   input: {
     width: '100%',
@@ -121,9 +177,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexDirection: 'column',
+    alignItems: 'center',
     width: '100%',
+    gap: 10,
   },
   button: {
     backgroundColor: '#007BFF',
@@ -131,6 +188,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 25,
     borderRadius: 8,
     elevation: 2,
+    width: '100%',
+    alignItems: 'center',
   },
   buttonText: {
     color: '#fff',
